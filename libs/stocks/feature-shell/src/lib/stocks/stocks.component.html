@@ -1,11 +1,14 @@
-<form [formGroup]="stockPickerForm">
+<form [formGroup]="stockPickerForm" role="search">
   <mat-form-field>
+    <label for="symbol" hidden>Symbol</label>
     <input
       matInput
       placeholder="Symbol e.g AAPL"
       formControlName="symbol"
+      id="symbol"
+      role="textbox"
       value=""
-    />
+      />
     <mat-error
       ><span
         *ngIf="
