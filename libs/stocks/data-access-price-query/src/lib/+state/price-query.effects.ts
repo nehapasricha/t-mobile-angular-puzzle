@@ -24,12 +24,20 @@ export class PriceQueryEffects {
       run: (action: FetchPriceQuery, state: PriceQueryPartialState) => {
         return this.httpClient
           .get(
-            `${this.env.apiURL}/beta/stock/${action.symbol}/chart/${
-              action.period
-            }?token=${this.env.apiKey}`
+            `${this.env.apiURL}/beta/stock/${action.symbol}/chart/max?token=${this.env.apiKey}`
           )
           .pipe(
-            map(resp => new PriceQueryFetched(resp as PriceQueryResponse[]))
+            map((data:PriceQueryResponse[]) => {
+              return data.filter(item => {
+                const itemDate = new Date(item.date);
+                // to allow comparison only of date fields, not time fields
+                itemDate.setHours(0, 0, 0, 0);
+                action.fromDate.setHours(0, 0, 0, 0);
+                action.toDate.setHours(0, 0, 0, 0);
+                return itemDate >= action.fromDate && itemDate <= action.toDate;
+              });
+             } ),
+            map(resp => new PriceQueryFetched(resp as PriceQueryResponse[])),
           );
       },
 
