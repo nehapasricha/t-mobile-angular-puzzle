@@ -3,11 +3,30 @@
  * This is only a minimal backend to get started.
  **/
 import { Server } from 'hapi';
+import { stocksPlugin } from './plugins/stocks.plugin';
+const CatBoxMemory = require('@hapi/catbox-memory');
 
 const init = async () => {
   const server = new Server({
     port: 3333,
-    host: 'localhost'
+    host: 'localhost',
+    cache: {
+      name: 'stocksCache',
+      engine: new CatBoxMemory()
+    }
+  });
+
+  const stocksDataCache = server.cache({
+    cache: 'stocksCache',
+    expiresIn: 1000 * 3600 * 24 * 30, // 30 days
+    segment: 'stocksCache'
+  });
+
+  await server.register({
+    plugin: stocksPlugin,
+    options: {
+      cache: stocksDataCache
+    }
   });
 
   server.route({
