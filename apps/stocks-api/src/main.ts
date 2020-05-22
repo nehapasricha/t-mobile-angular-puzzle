@@ -3,24 +3,13 @@
  * This is only a minimal backend to get started.
  **/
 import { Server } from 'hapi';
-import { environment } from './environments/environment';
-const Request = require('request-promise');
+import { stocksPlugin } from './plugins/stocks.plugin';
 const CatBoxMemory = require('@hapi/catbox-memory');
 
 const init = async () => {
   const server = new Server({
     port: 3333,
     host: 'localhost',
-    routes: {
-      cors: {
-        origin: ['http://localhost:4200'],
-        headers: ['Authorization'],
-        exposedHeaders: ['Accept'],
-        additionalExposedHeaders: ['Accept'],
-        maxAge: 60,
-        credentials: true
-      }
-    },
     cache: {
       name: 'stocksCache',
       engine: new CatBoxMemory()
@@ -33,6 +22,13 @@ const init = async () => {
     segment: 'stocksCache'
   });
 
+  await server.register({
+    plugin: stocksPlugin,
+    options: {
+      cache: stocksDataCache
+    }
+  });
+
   server.route({
     method: 'GET',
     path: '/',
@@ -40,27 +36,6 @@ const init = async () => {
       return {
         hello: 'world'
       };
-    }
-  });
-
-  server.route({
-    method: 'GET',
-    path: '/beta/stock/{symbol}/chart/{period}',
-    handler: async (request, h) => {
-      const { symbol, period } = request.params;
-      const token = request.query.token;
-      const cachedData = await stocksDataCache.get(`${symbol}.${period}`);
-      if (cachedData) {
-        return cachedData;
-      } else {
-        let response = await Request.get(
-          `${
-            environment.apiURL
-          }/beta/stock/${symbol}/chart/${period}?token=${token}`
-        );
-        await stocksDataCache.set(`${symbol}.${period}`, response);
-        return response;
-      }
     }
   });
 
